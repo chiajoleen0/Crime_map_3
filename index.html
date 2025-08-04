@@ -35,10 +35,12 @@
 
          let map = L.map('mapdiv', {
             center: L.latLng(1.2868108, 103.8545349),
-            zoom: 16,
-            maxBounds: bounds
+            zoom: 16
+            
          });
 
+         map.setMaxBounds(bounds); 
+         
          let basemap = L.tileLayer('https://www.onemap.gov.sg/maps/tiles/Default/{z}/{x}/{y}.png', {
             detectRetina: true,
             maxZoom: 19,
