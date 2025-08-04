@@ -1,34 +1,80 @@
-<html>
-   <head>
-      <title>OneMap: Default Map (XYZ)</title>
-      <link rel="stylesheet" href="https://www.onemap.gov.sg/web-assets/libs/leaflet/leaflet.css" />
-      <script src="https://www.onemap.gov.sg/web-assets/libs/leaflet/onemap-leaflet.js"></script>
-   </head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OneMap Crime Spot Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; }
+    #map { height: 90vh; }
+    #search-container {
+      padding: 10px;
+      background: #f0f0f0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    input, button {
+      padding: 6px 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
 
-   <body>
-      <h1>Default Map (XYZ)</h1>
-      <div id='mapdiv' style='height:800px;'></div>
-      <script>
-         let sw = L.latLng(1.144, 103.535);
-         let ne = L.latLng(1.494, 104.502);
-         let bounds = L.latLngBounds(sw, ne);
+<div id="search-container">
+  <input type="text" id="address" placeholder="Enter address (e.g. Block 123 Ang Mo Kio Ave 3)" size="50" />
+  <button onclick="searchAddress()">Search & Mark</button>
+</div>
 
-         let map = L.map('mapdiv', {
-            center: L.latLng(1.2868108, 103.8545349),
-            zoom: 16
-         });
+<div id="map"></div>
 
-         map.setMaxBounds(bounds);
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-         let basemap = L.tileLayer('https://www.onemap.gov.sg/maps/tiles/Default/{z}/{x}/{y}.png', {
-            detectRetina: true,
-            maxZoom: 19,
-            minZoom: 11,
-            /** DO NOT REMOVE the OneMap attribution below **/
-            attribution: '<img src="https://www.onemap.gov.sg/web-assets/images/logo/om_logo.png" style="height:20px;width:20px;"/>&nbsp;<a href="https://www.onemap.gov.sg/" target="_blank" rel="noopener noreferrer">OneMap</a>&nbsp;&copy;&nbsp;contributors&nbsp;&#124;&nbsp;<a href="https://www.sla.gov.sg/" target="_blank" rel="noopener noreferrer">Singapore Land Authority</a>'
-         });
+<script>
+  // Initialize the map centered on Singapore
+  const map = L.map('map').setView([1.3521, 103.8198], 12);
 
-         basemap.addTo(map);
-      </script>
-   </body>
-</html>
+  // Add OneMap tile layer
+  L.tileLayer('https://maps-{s}.onemap.sg/v3/Default/{z}/{x}/{y}.png', {
+    detectRetina: true,
+    maxZoom: 18,
+    minZoom: 11,
+    attribution: 'Map data © OneMap Singapore',
+    bounds: [[1.56073, 104.11475], [1.16, 103.502]]
+  }).addTo(map);
+
+  // Function to call OneMap Geocoding API and add marker
+  async function searchAddress() {
+    const address = document.getElementById('address').value.trim();
+    if (!address) return alert("Please enter an address");
+
+    const url = `https://developers.onemap.sg/commonapi/search?searchVal=${encodeURIComponent(address)}&returnGeom=Y&getAddrDetails=Y`;
+
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (data.found > 0) {
+        const result = data.results[0];
+        const lat = parseFloat(result.LATITUDE);
+        const lng = parseFloat(result.LONGITUDE);
+
+        L.marker([lat, lng]).addTo(map)
+          .bindPopup(`<b>Reported Crime Location</b><br>${address}`)
+          .openPopup();
+
+        map.setView([lat, lng], 16);
+      } else {
+        alert("Address not found in OneMap database.");
+      }
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      alert("There was an error with geocoding the address.");
+    }
+  }
+</script>
+
+</body>
+</html
